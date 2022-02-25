@@ -4,7 +4,7 @@ import os
 import sys
 import base64
 
-from main import *
+from app import *
 from preprocessing import *
 from util import *
 
