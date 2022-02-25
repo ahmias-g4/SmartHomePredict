@@ -1,5 +1,7 @@
+from operator import index
 from select import select
 from flask import Flask, render_template, request, flash, redirect, url_for, Response
+from prometheus_client import Counter
 from flask_wtf import FlaskForm
 from wtforms import FileField, SubmitField
 from werkzeug.utils import secure_filename
@@ -7,7 +9,7 @@ import os
 import tensorflow as tf
 from wtforms.validators import InputRequired
 from wtforms import MultipleFileField
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import preprocessing
 import predict
@@ -24,8 +26,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['UPLOAD_FOLDER'] = 'static/files'
 
-
-
+counter = 0
 
 ## Upload Form
 class UploadFileForm(FlaskForm):
@@ -67,6 +68,7 @@ def home():
             file.save(os.path.join(os.path.abspath(os.path.dirname(__file__)), app.config['UPLOAD_FOLDER'],
                                 "Multi_float.csv"))  # Then save the file
             type = "Multi"
+        
 
        
         #return f"File has been uploaded data of {type_dat}"
@@ -138,21 +140,61 @@ def preprocess():
                 df.to_csv('static/files/Output.csv')
                 data = pd.DataFrame(X)
                  
-    return redirect(url_for('vis'))#,data=data , df = df)
+        return redirect(url_for("graph"))
+    
 
-@app.route("/vis")
-# def vis():
-#     print("",type)
-#     print("",model_type)
-#     return render_template('vis.html')
 
-def vis():
-    fig = create_figure()
-    output = io.BytesIO()
-    img = FigureCanvas(fig).print_png(output)
-    file.save(os.path.join(os.path.abspath(os.path.dirname(__file__)), app.config['UPLOAD_FOLDER'],
-                                "Multi_int.csv"))  # Then save the file
-    return render_template('vis.html')
+@app.route("/graph", methods=['GET', 'POST'])
+def graph():
+
+    global counter
+    eps = 20 
+    if model_type == "SPEED":
+        eps = 5
+    border = counter + eps
+    data = pd.read_csv("static/files/data.csv")
+    prediction = pd.read_csv("static/files/Output.csv")
+    ## Prediction
+    add = prediction.iloc[counter]
+    prob = add.loc["prob"]
+    ## values for the plot
+    print(add.loc["sen"])
+    events = data.loc[counter:border-1, "event"]
+    print(len(events))
+    events = events.tolist()
+    events.append(add.loc["sen"])
+    print(len(events))
+    print(events)
+    label = [str(x) for x in range(1,eps+1)]
+    label.append("Pred")
+
+    if request.method == 'POST':
+    
+        if request.form.get('action1') == 'Backward':
+            if counter == 0:
+                print("predict")
+                return render_template('predict.html')
+            else:
+                print("hello")
+                counter += -1
+                return render_template('graph.html', title='Visualization', max=24, labels=label, values=events, prob=prob*100)
+
+            
+        if  request.form.get('action2') == 'Forward':
+            counter += 1
+            return render_template('graph.html', title='Visualization', max=24, labels=label, values=events, prob=prob*100)
+
+
+
+    labels = label
+
+    values = events
+    
+    return render_template('graph.html', title='Visualization', max=24, labels=labels, values=values)
+
+
+
+
 def create_figure():
     fig = Figure()
     axis = fig.add_subplot(1, 1, 1)
