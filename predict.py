@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 import sys
 import base64
-
+from keras.models import load_model
 from app import *
 from preprocessing import *
 from util import *
@@ -13,12 +13,12 @@ sys.path.append(os.path.abspath("./model"))
 
 # initialize model
 def init_model_cnn():
-    loaded_model = tf.keras.models.load_model('model/cnn_model.h5')
+    loaded_model = load_model('model/cnn_model.h5')
     print("loaded model successfully")
     return loaded_model
 
 def init_model_lstm():
-    loaded_model = tf.keras.models.load_model('model/lstm_model.h5')
+    loaded_model = load_model('model/lstm_model.h5')
     print("loaded model successfully")
     return loaded_model
 
