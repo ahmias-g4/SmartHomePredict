@@ -202,6 +202,6 @@ def create_figure():
     axis.plot(xs, ys)
     return fig
 
-if __name__ == '__main__':
+if __name__ == '__app__':
     app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.run(debug=True)
